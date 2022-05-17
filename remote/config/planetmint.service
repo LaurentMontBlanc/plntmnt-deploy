@@ -1,0 +1,14 @@
+##planetmint.service
+[Unit]
+Description=Planetmint. The blockchain database.
+Documentation=https://docs.planetmint.io
+After=tendermint.service
+
+[Service]
+ExecStart=/home/ubuntu/venv/bin/planetmint start
+WorkingDirectory=/home/ubuntu
+User=ubuntu
+Group=ubuntu
+
+[Install]
+WantedBy=multi-user.target
