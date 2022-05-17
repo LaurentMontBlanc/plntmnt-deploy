@@ -41,29 +41,40 @@ install_tm(){
     remote_exec "$ip" "$cmds"
 }
 
-install_planetmint(){
+install_python(){
     ip=$1
     cmds="sudo add-apt-repository ppa:deadsnakes/ppa;
         sudo apt-get update;
         sudo apt-get install -y python3.9 python3.9-dev;
         sudo apt-get update;
-        sudo apt-get install -y python3-virtualenv;
+        sudo apt-get install -y python3-virtualenv;"
+    remote_exec "$ip" "$cmds"
 
+}
+
+install_planetmint(){
+    ip=$1
+    cmds="
         virtualenv -p /usr/bin/python3.9 venv;
         source venv/bin/activate;
 
-        pip install planetmint;
-
-        planetmint -y configure;
-        sed -i -e 's/localhost:9984/0\.0\.0\.0:9984/g' .planetmint"
-        remote_exec "$ip" "$cmds"
+        pip install planetmint;"
+    remote_exec "$ip" "$cmds"
 }
+
+remove_planetmint(){
+    ip=$1
+    cmds="rm -rf venv;"
+    remote_exec "$ip" "$cmds"
+}
+
 
 install_stack(){
     ip=$1
     install_deps "$ip"
     install_tm "$ip"
     install_db "$ip"
+    install_python "$ip"
     install_planetmint "$ip"
 }
 
@@ -131,8 +142,7 @@ config_tm(){
 config_pl(){
     ip=$1
     copy_to "./config/planetmint" $1 "test-network-planetmint"
-    cmds='wget https://gist.githubusercontent.com/eckelj/47ca8c9b4a0726ea3633eea0f75f3602/raw/6dd3329637bcc455d60f447c010f99232f1bd129/test-network-planetmint;
-    cp test-network-planetmint ~/.planetmint;
+    cmds='cp test-network-planetmint ~/.planetmint;
     rm test-network-planetmint;'
     remote_exec "$ip" "$cmds"
 }
@@ -170,6 +180,10 @@ has_tx(){
     curl http://$1:9984/api/v1/transactions/$tx_id
 }
 
+list_ips(){
+    echo "$1"
+}
+
 
 
 #OSITIONAL_ARGS=()
@@ -201,16 +215,6 @@ has_tx(){
 #done
 
 
-
-
-
-
-
-
-#IPS=('3.66.221.17' '3.123.40.222' '3.72.94.104' '3.68.108.18')  # EBSI Layer 1
-#IPS=('3.123.40.222' '3.72.94.104' '3.68.108.18')
-#IPS=('3.66.221.17')
-#IPS=('3.70.11.61') # test.ipdb.io
 IPS=('3.73.50.172' '3.73.66.61' '3.69.169.21' '3.71.105.61') # EBSI Layer 0
 config_env="./config/ebsi-layer0"
 
@@ -232,11 +236,58 @@ test.ipdb.io)
     IPS=('3.70.11.61') # test.ipdb.io
     config_env="./config/test.ipdb.io"
     ;;
-quit)
-    break
-    ;;
 *) 
     echo "Invalid option $REPLY"
+    exit 1
+    ;;
+esac
+
+case $2 in
+install_deps)
+    ;;
+install_db_tm)
+    ;;
+install_db)
+    ;;
+install_nginx)
+    ;;
+install_planetmint)
+    ;;
+install_stack)
+    ;;
+install_python)
+    ;;
+remove_planetmint)
+    ;;
+init_tm)
+    ;;
+config_pl)
+    ;;
+config_tm)
+    ;;
+stop_services)
+    ;;
+install_services)
+    ;;
+init_services)
+    ;;
+start_services)
+    ;;
+reset_data)
+    ;;
+status_services)
+    ;;
+verify_port)
+    ;;
+has_tx)
+    ;;
+basic_check)
+    ;;
+list_ips)
+    ;;
+*)
+    echo "Unknown option: $2"
+    exit 1
     ;;
 esac
 
@@ -268,8 +319,8 @@ do
     #stop_services "$ip"
     #reset_data "$ip"
     #start_services "$ip"
-    
-    status_services "$ip"
+    $2 $ip $3
+    #status_services "$ip"
     #basic_check "$ip"
     #has_tx "$ip" $1
     #stop_services "$ip"
