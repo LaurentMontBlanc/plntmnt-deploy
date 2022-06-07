@@ -11,7 +11,7 @@ verify_port(){
 remote_exec(){
     #ip=$1
     #cmd=$2
-    ssh -i ~/.keys/rddl_aws_bigchaindb.pem ubuntu@$1 $2
+    ssh -i ~/.keys/rddl_aws_bigchaindb.pem ubuntu@$1 $2 $3 $4 $5 $6 $7
 }
 
 copy_to(){
@@ -75,7 +75,9 @@ install_stack(){
     install_tm "$ip"
     install_db "$ip"
     install_python "$ip"
+    install_nginx "$ip"
     install_planetmint "$ip"
+    init_services "$ip"
 }
 
 install_services(){
@@ -102,7 +104,7 @@ install_nginx(){
 
 init_services(){
     ip=$1
-    cmds='sudo systemctl daemon-reload;
+    cmds='sudo systemctl daemon-reload;get_tm_identities
         sudo systemctl enable planetmint.service;
         sudo systemctl enable tendermint.service;'
     remote_exec "$ip" "$cmds"
@@ -111,21 +113,17 @@ init_services(){
 init_tm(){
     ip=$1
     ## be careful to not reinit tendermint because the identites of the nodes will change
-    #cmds='tendermint init; cat ~/.tendermint/config/priv_validator_key.json; tendermint show_node_id'
-    #cmds=' cat ~/.tendermint/config/priv_validator_key.json; tendermint show_node_id'
-    cmds='tendermint show_node_id'
+    cmds='tendermint init;'
+    remote_exec "$ip" "$cmds"
+}
+get_tm_identities(){
+    ip=$1
+    cmds=' cat ~/.tendermint/config/priv_validator_key.json; tendermint show_node_id'
     remote_exec "$ip" "$cmds"
 }
 
 config_tm(){
     ip=$1
-#    cmds='wget https://gist.githubusercontent.com/eckelj/c0da0e9b32594782e75b1e9161c832dc/raw/cdc0404fd1e09a0740927cec82f18b722757a53d/test-network-genesis.json;
-#    cp test-network-genesis.json ~/.tendermint/config/genesis.json;
-#    rm test-network-genesis.json;
-#    wget https://gist.githubusercontent.com/eckelj/128c5ad6961cbec0a83c3476034039c8/raw/e7d45b9ba01ac1a2ada95c448c02fc0a7e1621e5/ebsi-testnet-config.yaml;
-#    cp ebsi-testnet-config.yaml ~/.tendermint/config/config.toml;
-#    rm ebsi-testnet-config.yaml'
-
     copy_to "$config_env/config.yaml" $1 "ebsi-testnet-config.yaml"
     cmds='cp ebsi-testnet-config.yaml ~/.tendermint/config/config.toml;
     rm ebsi-testnet-config.yaml'
@@ -145,6 +143,36 @@ config_pl(){
     cmds='cp test-network-planetmint ~/.planetmint;
     rm test-network-planetmint;'
     remote_exec "$ip" "$cmds"
+}
+
+fix_pl_deps(){
+    ip=$1
+    cmds='source venv/bin/activate;
+    pip install protobuf==3.20.1;'
+    remote_exec "$ip" "$cmds"
+}
+
+
+
+vote_approve(){
+    ip=$1
+    cmds='venv/bin/planetmint election approve --private-key ~/.tendermint/config/priv_validator_key.json'
+    echo $cmds
+    remote_exec "$ip" "$cmds" $2
+}
+
+vote_show(){
+    ip=$1
+    cmds='venv/bin/planetmint election show'
+    echo $cmds
+    remote_exec "$ip" "$cmds" $2
+}
+
+propose_election(){
+    ip=$1
+    cmds='venv/bin/planetmint election new upsert-validator --private-key ~/.tendermint/config/priv_validator_key.json'
+    echo $cmds
+    remote_exec "$ip" "$cmds" $2 $3 $4 $5
 }
 
 start_services(){
@@ -225,7 +253,9 @@ network=$1
 
 case $network in
 layer0)
-    IPS=('3.73.50.172' '3.73.66.61' '3.69.169.21' '3.71.105.61') # EBSI Layer 0
+    #IPS=('3.73.50.172' '3.73.66.61' '3.69.169.21' '3.71.105.61') # EBSI Layer 0 - initial nodes
+    #IPS=('13.36.36.183' '15.188.11.249' '54.155.135.41' '54.229.224.120' '13.51.162.17' '16.171.30.78') # EBSI Layer 0 - added nodes
+    IPS=('3.73.50.172' '3.73.66.61' '3.69.169.21' '3.71.105.61' '13.36.36.183' '15.188.11.249' '54.155.135.41' '54.229.224.120' '13.51.162.17' '16.171.30.78') # EBSI Layer 0
     config_env="./config/ebsi-layer0"
     ;;
 layer1)
@@ -245,7 +275,7 @@ esac
 case $2 in
 install_deps)
     ;;
-install_db_tm)
+install_tm)
     ;;
 install_db)
     ;;
@@ -285,6 +315,16 @@ basic_check)
     ;;
 list_ips)
     ;;
+fix_pl_deps)
+    ;;
+vote_approve)
+    ;;
+vote_show)
+    ;;
+propose_election)
+    ;;
+get_tm_identities)
+    ;;
 *)
     echo "Unknown option: $2"
     exit 1
@@ -295,36 +335,11 @@ esac
 for ip in "${IPS[@]}"
 do
     echo "Executing on this IP " "$ip"
-    #install_deps "$ip"
-    #install_db_tm "$ip"
-    #install_db "$ip"
-    #install_nginx "$ip"
-    #install_planetmint "$ip"
-    #install_stack "$ip"
-
-    #init_tm "$ip"
-    #config_pl "$ip"
-    #config_tm "$ip"
-    #init_tm "$ip"
-
-    #stop_services "$ip"
-    #install_services "$ip"
-    #init_services "$ip"
-    #start_services "$ip"
-    
-    #init_tm "$ip"
-    
-    #config_tm "$ip"
-    #config_pl "$ip"
-    #stop_services "$ip"
-    #reset_data "$ip"
-    #start_services "$ip"
-    $2 $ip $3
-    #status_services "$ip"
-    #basic_check "$ip"
-    #has_tx "$ip" $1
-    #stop_services "$ip"
-    #verify_port "$ip" $1
+    $2 $ip $3 $4 $5
+    if [[ "$2" == "propose_election" ]]
+    then
+        break
+    fi
     echo "$ip"
 done
 
