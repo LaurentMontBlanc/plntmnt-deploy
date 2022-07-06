@@ -128,12 +128,12 @@ max_open_connections = 900
 # Maximum number of unique clientIDs that can /subscribe
 # If you're using /broadcast_tx_commit, set to the estimated maximum number
 # of broadcast_tx_commit calls per block.
-max_subscription_clients = 100
+max_subscription_clients = 900
 
 # Maximum number of unique queries a given client can /subscribe to
 # If you're using GRPC (or Local RPC client) and /broadcast_tx_commit, set to
 # the estimated # maximum number of broadcast_tx_commit calls per block.
-max_subscriptions_per_client = 100
+max_subscriptions_per_client = 900
 
 # Experimental parameter to specify the maximum number of events a node will
 # buffer, per subscription, before returning an error and closing the
@@ -212,7 +212,7 @@ seeds = ""
 
 # Comma separated list of nodes to keep persistent connections to
 persistent_peers = "\
-923ecc636530b69ccf3bb27efe7b58def50b5f03@3.73.50.172:26656,\
+13483e574c1573fbcb6cf07f2ee1c64b43930a4a@3.70.186.190:26656,\
 9a732d0469de2cbdae53faeef3979d6d1133b0ee@3.73.66.61:26656,\
 304082549fcf994315791497195e0ce29791ccea@3.69.169.21:26656,\
 2f7b7b4b48af9ed3aa5622b49ca6bd1deda3b098@3.71.105.61:26656,\
@@ -432,7 +432,7 @@ prometheus_listen_addr = ":26660"
 # If you want to accept a larger number than the default, make sure
 # you increase your OS limits.
 # 0 - unlimited.
-max_open_connections = 3
+max_open_connections = 0
 
 # Instrumentation namespace
 namespace = "tendermint"

@@ -1,5 +1,6 @@
 box.cfg{listen = 3303}
-box.once("bootstrap", function () bootstrapschema.user.grant('guest','read,write,execute,create,drop','universe') end  )
+box.schema.user.grant('guest','read,write,execute,create,drop','universe')
+
 
 function indexed_pattern_search(space_name, field_no, pattern)
   if (box.space[space_name] == nil) then
