@@ -55,7 +55,7 @@ install_python(){
 
 install_planetmint(){
     ip=$1
-    copy_to "./config/Planetmint-0.9.9.tar.gz" "$ip" "~/Planetmint-0.9.9.tar.gz"
+    copy_to "./config/Planetmint-1.0.1.tar.gz" "$ip" "~/Planetmint-1.0.1.tar.gz"
     cmds="
         virtualenv -p /usr/bin/python3.9 venv;
         source venv/bin/activate;
